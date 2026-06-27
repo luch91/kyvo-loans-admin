@@ -1070,21 +1070,6 @@ const DisbursementLog = () => {
                             fontSize:'13px', color:'#334155', backgroundColor:'#fff', cursor:'pointer', outline:'none' }}/>
                 </div>
 
-                {/* Lender dropdown */}
-                <div style={{ position:'relative' }}>
-                    <select style={{ height:'40px', padding:'0 32px 0 12px', border:'1px solid #E2E8F0',
-                        borderRadius:'8px', fontSize:'13px', color:'#334155', backgroundColor:'#fff',
-                        appearance:'none', cursor:'pointer', width:'180px', outline:'none' }}>
-                        <option>All Lenders</option>
-                        <option>Prembly Capital</option>
-                        <option>Lagos Microfinance</option>
-                        <option>Abuja Trust Bank</option>
-                        <option>NorthStar Lending</option>
-                    </select>
-                    <Icon d={IC.chevDown} size={14} color="#94A3B8"
-                        style={{ position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}/>
-                </div>
-
                 {/* Status tabs */}
                 <div style={{ display:'flex', gap:'4px', marginLeft:'8px' }}>
                     {tabs.map(t => (
@@ -1133,9 +1118,9 @@ const DisbursementLog = () => {
                     <table style={{ width:'100%', borderCollapse:'collapse' }}>
                         <thead>
                             <tr style={{ backgroundColor:'#1E293B', height:'52px' }}>
-                                {['Loan No.','Borrower','Lender','Amount (₦)','Admin Fee (₦)','Disbursed At','Bank','Status','Actions'].map((h,i) => (
+                                {['Loan No.','Borrower','Amount (₦)','Admin Fee (₦)','Disbursed At','Bank','Status','Actions'].map((h,i) => (
                                     <th key={h} style={{ padding:'0 16px', color:'#fff', fontSize:'11px', fontWeight:600,
-                                        textAlign: ['Amount (₦)','Admin Fee (₦)'].includes(h) ? 'right' : i===8 ? 'center' : 'left',
+                                        textAlign: ['Amount (₦)','Admin Fee (₦)'].includes(h) ? 'right' : i===7 ? 'center' : 'left',
                                         whiteSpace:'nowrap', userSelect:'none' }}>{h}</th>
                                 ))}
                             </tr>
@@ -1158,8 +1143,6 @@ const DisbursementLog = () => {
                                             </td>
                                             {/* Borrower */}
                                             <td style={{ padding:'0 16px', fontSize:'13px', fontWeight:500, color:'#1E293B' }}>{row.borrower}</td>
-                                            {/* Lender */}
-                                            <td style={{ padding:'0 16px', fontSize:'13px', color:'#475569' }}>{row.lender}</td>
                                             {/* Amount */}
                                             <td style={{ padding:'0 16px', textAlign:'right', fontFamily:'monospace', fontSize:'13px', fontWeight:600, color:'#1E293B' }}>
                                                 {row.amount.toLocaleString()}
@@ -4277,21 +4260,30 @@ const DailyReportConfig = () => {
    ADM-25: AML/KYC REPORT
 ───────────────────────────────────────── */
 const AML_ROWS = [
-    { date:'14 Jun, 14:03', borrower:'Ada Okafor',      loan:'LN-2025-004421', lender:'QuickCredit Ltd',    check:'BVN Match',        result:'Pass',    flag:'None',      reviewer:'Kemi Bello'        },
-    { date:'14 Jun, 13:47', borrower:'Emeka Eze',        loan:'LN-2025-004388', lender:'FastCash Nigeria',   check:'Selfie Liveness',  result:'Pass',    flag:'None',      reviewer:'Auto-cleared'      },
-    { date:'14 Jun, 12:31', borrower:'Ngozi Abiodun',   loan:'LN-2025-004350', lender:'EasySave Finance',   check:'PEP Screen',       result:'Fail',    flag:'PEP Match', reviewer:'Sarah Ade'          },
-    { date:'14 Jun, 11:18', borrower:'Taiwo Adeyemi',   loan:'LN-2025-004318', lender:'QuickCredit Ltd',    check:'Sanctions Screen', result:'Fail',    flag:'AML Flag',  reviewer:'Compliance Lead'    },
-    { date:'14 Jun, 10:55', borrower:'Chukwu Ike',      loan:'LN-2025-004299', lender:'MicroLend Partners', check:'NIN Verify',       result:'Pending', flag:'None',      reviewer:'—'                  },
-    { date:'14 Jun, 09:42', borrower:'Halima Yusuf',    loan:'LN-2025-004177', lender:'Apex Micro Finance', check:'BVN Match',        result:'Pending', flag:'None',      reviewer:'—'                  },
-    { date:'13 Jun, 17:20', borrower:'Musa Abdullahi',  loan:'LN-2025-004155', lender:'FastCash Nigeria',   check:'Selfie Liveness',  result:'Pass',    flag:'None',      reviewer:'Auto-cleared'       },
-    { date:'13 Jun, 16:08', borrower:'Fatima Aliyu',    loan:'LN-2025-004133', lender:'QuickCredit Ltd',    check:'NIN Verify',       result:'Pass',    flag:'None',      reviewer:'Auto-cleared'       },
+    { date:'14 Jun, 14:03', borrower:'Ada Okafor',     loan:'LN-2025-004421', check:'BVN Match',        result:'Pass',    flag:'None',      reviewer:'Kemi Bello',      product:'QuickLoan Standard' },
+    { date:'14 Jun, 13:47', borrower:'Emeka Eze',      loan:'LN-2025-004388', check:'Selfie Liveness',  result:'Pass',    flag:'None',      reviewer:'Auto-cleared',    product:'SME Booster'        },
+    { date:'14 Jun, 12:31', borrower:'Ngozi Abiodun',  loan:'LN-2025-004350', check:'PEP Screen',       result:'Fail',    flag:'PEP Match', reviewer:'Sarah Ade',       product:'Emergency Fund'     },
+    { date:'14 Jun, 11:18', borrower:'Taiwo Adeyemi',  loan:'LN-2025-004318', check:'Sanctions Screen', result:'Fail',    flag:'AML Flag',  reviewer:'Compliance Lead', product:'QuickLoan Standard' },
+    { date:'14 Jun, 10:55', borrower:'Chukwu Ike',     loan:'LN-2025-004299', check:'NIN Verify',       result:'Pending', flag:'None',      reviewer:'—',               product:'Micro Credit'       },
+    { date:'14 Jun, 09:42', borrower:'Halima Yusuf',   loan:'LN-2025-004177', check:'BVN Match',        result:'Pending', flag:'None',      reviewer:'—',               product:'Salary Advance'     },
+    { date:'13 Jun, 17:20', borrower:'Musa Abdullahi', loan:'LN-2025-004155', check:'Selfie Liveness',  result:'Pass',    flag:'None',      reviewer:'Auto-cleared',    product:'SME Booster'        },
+    { date:'13 Jun, 16:08', borrower:'Fatima Aliyu',   loan:'LN-2025-004133', check:'NIN Verify',       result:'Pass',    flag:'None',      reviewer:'Auto-cleared',    product:'QuickLoan Standard' },
 ];
 
 const AMLKYCReport = () => {
-    const [status,    setStatus]    = useState('All');
-    const [dateFrom,  setDateFrom]  = useState('2026-06-07');
-    const [dateTo,    setDateTo]    = useState('2026-06-14');
-    const [page,      setPage]      = useState(1);
+    const [status,      setStatus]      = useState('All');
+    const [dateFrom,    setDateFrom]    = useState('2026-06-07');
+    const [dateTo,      setDateTo]      = useState('2026-06-14');
+    const [page,        setPage]        = useState(1);
+    const [reviewRow,   setReviewRow]   = useState(null);
+    const [reviewAction,setReviewAction]= useState(null);
+    const [generating,  setGenerating]  = useState(false);
+    const [generated,   setGenerated]   = useState(false);
+
+    const handleGenerate = () => {
+        setGenerating(true);
+        setTimeout(()=>{ setGenerating(false); setGenerated(true); setTimeout(()=>setGenerated(false),4000); }, 1800);
+    };
 
     const checkBadge = {
         'BVN Match':        { bg:'#E8EBFD', color:'#1E2ECC', border:'#B8BFF8' },
@@ -4328,10 +4320,6 @@ const AMLKYCReport = () => {
                 <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)}
                     style={{ height:'36px', padding:'0 10px', borderRadius:'8px', border:'1px solid #CBD5E1',
                         fontSize:'13px', color:'#334155', outline:'none' }}/>
-                <select style={{ height:'36px', padding:'0 12px', borderRadius:'8px', border:'1px solid #CBD5E1',
-                    fontSize:'13px', color:'#334155', backgroundColor:'#fff', cursor:'pointer' }}>
-                    <option>All Lenders</option><option>QuickCredit Ltd</option><option>FastCash Nigeria</option>
-                </select>
                 <div style={{ display:'flex', gap:'4px' }}>
                     {['All','Pass','Fail','Pending'].map(s=>(
                         <button key={s} onClick={()=>setStatus(s)}
@@ -4343,11 +4331,26 @@ const AMLKYCReport = () => {
                         </button>
                     ))}
                 </div>
-                <div style={{ marginLeft:'auto', display:'flex', gap:'8px' }}>
-                    <button style={{ height:'38px', padding:'0 18px', borderRadius:'8px', fontSize:'13px', fontWeight:700,
-                        border:'none', backgroundColor:'#3B4FEA', color:'#fff', cursor:'pointer',
-                        boxShadow:'0 1px 4px rgba(59,79,234,.2)' }}>
-                        Generate
+                <div style={{ marginLeft:'auto', display:'flex', gap:'8px', alignItems:'center' }}>
+                    {generated && (
+                        <span style={{ fontSize:'12px', color:'#15803D', fontWeight:600, display:'flex', alignItems:'center', gap:'4px' }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            Report generated — 1,847 records
+                        </span>
+                    )}
+                    <button onClick={handleGenerate} disabled={generating}
+                        style={{ height:'38px', padding:'0 18px', borderRadius:'8px', fontSize:'13px', fontWeight:700,
+                            border:'none', backgroundColor: generating ? '#6874F0' : '#3B4FEA', color:'#fff', cursor: generating ? 'default' : 'pointer',
+                            boxShadow:'0 1px 4px rgba(59,79,234,.2)', display:'flex', alignItems:'center', gap:'6px', minWidth:'110px', justifyContent:'center' }}>
+                        {generating ? (
+                            <>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                                    style={{ animation:'spin 1s linear infinite' }}>
+                                    <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                                </svg>
+                                Generating…
+                            </>
+                        ) : 'Generate Report'}
                     </button>
                     <button style={{ height:'38px', padding:'0 14px', borderRadius:'8px', fontSize:'13px', fontWeight:500,
                         border:'1.5px solid #E2E8F0', color:'#475569', backgroundColor:'#fff', cursor:'pointer',
@@ -4382,7 +4385,7 @@ const AMLKYCReport = () => {
                     <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px' }}>
                         <thead>
                             <tr style={{ backgroundColor:'#1E293B', height:'44px' }}>
-                                {['Date','Borrower','Loan No.','Lender','Check Type','Result','Risk Flag','Reviewed By','Action'].map(h=>(
+                                {['Date','Borrower','Loan No.','Product','Check Type','Result','Risk Flag','Reviewed By','Action'].map(h=>(
                                     <th key={h} style={{ padding:'0 12px', color:'#fff', fontSize:'11px',
                                         fontWeight:600, textAlign:'left', whiteSpace:'nowrap' }}>{h}</th>
                                 ))}
@@ -4401,7 +4404,7 @@ const AMLKYCReport = () => {
                                         <td style={{ padding:'0 12px', fontWeight:600,
                                             color: r.result==='Fail' ? '#B91C1C' : '#1E293B' }}>{r.borrower}</td>
                                         <td style={{ padding:'0 12px', fontFamily:'monospace', fontSize:'11px', color:'#94A3B8' }}>{r.loan}</td>
-                                        <td style={{ padding:'0 12px', fontSize:'11px', color:'#64748B' }}>{r.lender}</td>
+                                        <td style={{ padding:'0 12px', fontSize:'11px', color:'#64748B' }}>{r.product}</td>
                                         <td style={{ padding:'0 12px' }}>
                                             {(() => { const cb = checkBadge[r.check];
                                                 return <span style={{ padding:'2px 8px', borderRadius:'9999px', fontSize:'10px', fontWeight:600,
@@ -4439,9 +4442,10 @@ const AMLKYCReport = () => {
                                         </td>
                                         <td style={{ padding:'0 12px' }}>
                                             {(r.result==='Fail'||r.result==='Pending') && (
-                                                <button style={{ fontSize:'11px', fontWeight:600, color:'#2B3DE8',
-                                                    background:'none', border:'none', cursor:'pointer', padding:0,
-                                                    textDecoration:'underline', textUnderlineOffset:'2px' }}>
+                                                <button onClick={()=>{ setReviewRow(r); setReviewAction(null); }}
+                                                    style={{ fontSize:'11px', fontWeight:600, color:'#2B3DE8',
+                                                        background:'none', border:'none', cursor:'pointer', padding:0,
+                                                        textDecoration:'underline', textUnderlineOffset:'2px' }}>
                                                     Review
                                                 </button>
                                             )}
@@ -4481,6 +4485,69 @@ const AMLKYCReport = () => {
                     </div>
                 </div>
             </div>
+
+            {/* AML Review Modal */}
+            {reviewRow && (
+                <div style={{ position:'fixed', inset:0, backgroundColor:'rgba(15,23,42,.5)', zIndex:200,
+                    display:'flex', alignItems:'center', justifyContent:'center' }}
+                    onClick={e=>{ if(e.target===e.currentTarget) setReviewRow(null); }}>
+                    <div style={{ backgroundColor:'#fff', borderRadius:'12px', width:'480px', padding:'28px',
+                        boxShadow:'0 20px 60px rgba(0,0,0,.25)' }}>
+                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px' }}>
+                            <div>
+                                <h3 style={{ fontSize:'17px', fontWeight:700, color:'#1E293B', marginBottom:'2px' }}>KYC Check Review</h3>
+                                <span style={{ fontSize:'11px', fontFamily:'monospace', color:'#94A3B8' }}>{reviewRow.loan}</span>
+                            </div>
+                            <button onClick={()=>setReviewRow(null)}
+                                style={{ background:'none', border:'none', cursor:'pointer', color:'#94A3B8', fontSize:'20px', lineHeight:1 }}>✕</button>
+                        </div>
+                        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'20px' }}>
+                            {[
+                                { label:'Borrower',   value:reviewRow.borrower },
+                                { label:'Product',    value:reviewRow.product  },
+                                { label:'Check Type', value:reviewRow.check    },
+                                { label:'Date',       value:reviewRow.date     },
+                                { label:'Result',     value:reviewRow.result   },
+                                { label:'Risk Flag',  value:reviewRow.flag     },
+                            ].map(f=>(
+                                <div key={f.label} style={{ backgroundColor:'#F8FAFC', borderRadius:'8px', padding:'10px 12px', border:'1px solid #E2E8F0' }}>
+                                    <div style={{ fontSize:'10px', fontWeight:600, color:'#94A3B8', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:'3px' }}>{f.label}</div>
+                                    <div style={{ fontSize:'13px', fontWeight:600,
+                                        color: (f.label==='Result'&&reviewRow.result==='Fail')||(f.label==='Risk Flag'&&reviewRow.flag!=='None') ? '#DC2626' : '#1E293B' }}>
+                                        {f.value}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        {reviewAction ? (
+                            <div style={{ textAlign:'center', padding:'12px 0' }}>
+                                <div style={{ fontSize:'36px', marginBottom:'10px' }}>{reviewAction==='cleared' ? '✅' : '🔴'}</div>
+                                <div style={{ fontSize:'15px', fontWeight:700, color: reviewAction==='cleared' ? '#15803D' : '#B91C1C' }}>
+                                    {reviewAction==='cleared' ? 'Case cleared by you' : 'Escalated to Compliance team'}
+                                </div>
+                                <div style={{ fontSize:'12px', color:'#64748B', marginTop:'4px' }}>Action logged — {new Date().toLocaleTimeString('en-NG')}</div>
+                                <button onClick={()=>setReviewRow(null)}
+                                    style={{ marginTop:'14px', height:'36px', padding:'0 20px', borderRadius:'8px',
+                                        fontSize:'13px', fontWeight:600, border:'1.5px solid #E2E8F0',
+                                        color:'#475569', backgroundColor:'#fff', cursor:'pointer' }}>Close</button>
+                            </div>
+                        ) : (
+                            <div style={{ display:'flex', gap:'10px' }}>
+                                <button onClick={()=>setReviewAction('cleared')}
+                                    style={{ flex:1, height:'42px', borderRadius:'8px', fontSize:'13px', fontWeight:700,
+                                        border:'none', backgroundColor:'#15803D', color:'#fff', cursor:'pointer' }}>
+                                    Clear / Approve
+                                </button>
+                                <button onClick={()=>setReviewAction('escalated')}
+                                    style={{ flex:1, height:'42px', borderRadius:'8px', fontSize:'13px', fontWeight:700,
+                                        border:'none', backgroundColor:'#DC2626', color:'#fff', cursor:'pointer' }}>
+                                    Escalate to Compliance
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -6178,11 +6245,11 @@ const NPL_COMPOSITION = [
 ];
 
 const NPL_LENDERS = [
-    { lender:'QuickCredit Ltd',    npl:9.2, vs:'+1.4%', status:'Alert'  },
-    { lender:'FastCash Nigeria',   npl:7.8, vs:'+0.9%', status:'Alert'  },
-    { lender:'EasySave Finance',   npl:6.1, vs:'+0.3%', status:'Alert'  },
-    { lender:'MicroLend Partners', npl:4.2, vs:'-0.2%', status:'OK'     },
-    { lender:'Apex Micro Finance', npl:3.6, vs:'-0.5%', status:'OK'     },
+    { lender:'Emergency Fund',     npl:7.2, vs:'+1.4%', status:'Alert'  },
+    { lender:'Micro Credit',       npl:5.6, vs:'+0.9%', status:'Alert'  },
+    { lender:'QuickLoan Standard', npl:4.1, vs:'+0.3%', status:'Alert'  },
+    { lender:'SME Booster',        npl:2.8, vs:'-0.2%', status:'OK'     },
+    { lender:'Salary Advance',     npl:1.4, vs:'-0.5%', status:'OK'     },
 ];
 
 const NPLRatioPanel = () => {
@@ -6228,7 +6295,7 @@ const NPLRatioPanel = () => {
                 </select>
                 <select style={{ height:'34px', padding:'0 12px', borderRadius:'8px', border:'1px solid #CBD5E1',
                     fontSize:'13px', color:'#334155', backgroundColor:'#fff', cursor:'pointer' }}>
-                    <option>All Lenders</option>
+                    <option>All Products</option>
                     {NPL_LENDERS.map(l=><option key={l.lender}>{l.lender}</option>)}
                 </select>
             </div>
@@ -6377,7 +6444,7 @@ const NPLRatioPanel = () => {
                             <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px' }}>
                                 <thead>
                                     <tr style={{ backgroundColor:'#F8FAFC', height:'32px' }}>
-                                        {['Lender','NPL %','vs Last Month','Status'].map(h=>(
+                                        {['Product','NPL %','vs Last Month','Status'].map(h=>(
                                             <th key={h} style={{ padding:'0 12px', color:'#64748B', fontSize:'10px',
                                                 fontWeight:600, textAlign:'left', borderBottom:'1px solid #E2E8F0' }}>{h}</th>
                                         ))}
@@ -6408,9 +6475,9 @@ const NPLRatioPanel = () => {
                             boxShadow:'0 1px 3px rgba(0,0,0,.06)', padding:'16px 20px' }}>
                             <h3 style={{ fontSize:'14px', fontWeight:600, color:'#1E293B', marginBottom:'12px' }}>Recommended Actions</h3>
                             {[
-                                { priority:'High',   text:'Escalate DPD 60+ accounts to senior collections team immediately.' },
-                                { priority:'Medium', text:'Review QuickCredit Ltd portfolio — NPL at 9.2%, above group average.' },
-                                { priority:'Low',    text:'Schedule NPL review meeting with lender risk managers by Jun 18.' },
+                                { priority:'High',   text:'Escalate DPD 60+ accounts on Emergency Fund to senior collections immediately.' },
+                                { priority:'Medium', text:'Review Micro Credit product — NPL at 5.6%, above 5% regulatory threshold.' },
+                                { priority:'Low',    text:'Schedule portfolio NPL review with risk team before end of quarter.' },
                             ].map((a,i)=>(
                                 <div key={i} style={{ display:'flex', gap:'10px', padding:'8px 0',
                                     borderBottom: i<2 ? '1px solid #F1F5F9' : 'none' }}>
@@ -8378,7 +8445,8 @@ const LoanContractSettings = () => {
     const [minLoan,      setMinLoan]      = useState('5000');
     const [tenure,       setTenure]       = useState('30');
     const [maxTenure,    setMaxTenure]    = useState('180');
-    const [defaultRate,  setDefaultRate]  = useState('3.0');
+    const [defaultRate,    setDefaultRate]    = useState('3.0');
+    const [penaltyPeriod,  setPenaltyPeriod]  = useState('day');
     const [interestStop, setInterestStop] = useState('90');
     const [gracePeriod,  setGracePeriod]  = useState('3');
     const [compounding,  setCompounding]  = useState('monthly');
@@ -8479,7 +8547,32 @@ const LoanContractSettings = () => {
                         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'20px' }}>
                             <LoanInp label="Admin / Processing Fee" value={adminFee} onChange={setAdminFee} suffix="%" hint="Applied at disbursement"/>
                             <LoanInp label="Loan Interest Rate" value={interest} onChange={setInterest} suffix="%" hint="Monthly rate"/>
-                            <LoanInp label="Defaulting Penalty Rate" value={defaultRate} onChange={setDefaultRate} suffix="%" hint="Per month on overdue"/>
+                            <div>
+                                <label style={{ fontSize:'11px', fontWeight:600, color:'#475569', textTransform:'uppercase',
+                                    letterSpacing:'.06em', display:'block', marginBottom:'5px' }}>Defaulting Penalty Rate</label>
+                                <div style={{ fontSize:'11px', color:'#94A3B8', marginBottom:'6px' }}>
+                                    Applied on overdue balance
+                                </div>
+                                <div style={{ display:'flex', gap:'6px' }}>
+                                    <div style={{ position:'relative', flex:1 }}>
+                                        <input type="text" value={defaultRate} onChange={e=>setDefaultRate(e.target.value)}
+                                            style={{ width:'100%', height:'38px', paddingLeft:'12px', paddingRight:'28px',
+                                                borderRadius:'8px', border:'1px solid #E2E8F0', fontSize:'13px',
+                                                color:'#1E293B', outline:'none', boxSizing:'border-box' }}
+                                            onFocus={e=>e.target.style.borderColor='#2B3DE8'}
+                                            onBlur={e=>e.target.style.borderColor='#E2E8F0'}/>
+                                        <span style={{ position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)',
+                                            fontSize:'12px', color:'#94A3B8', pointerEvents:'none' }}>%</span>
+                                    </div>
+                                    <select value={penaltyPeriod} onChange={e=>setPenaltyPeriod(e.target.value)}
+                                        style={{ height:'38px', padding:'0 10px', borderRadius:'8px', border:'1px solid #E2E8F0',
+                                            fontSize:'12px', color:'#334155', backgroundColor:'#fff', cursor:'pointer', flexShrink:0 }}>
+                                        <option value="day">per day</option>
+                                        <option value="week">per week</option>
+                                        <option value="month">per month</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     {/* Limits & Tenure */}
