@@ -109,11 +109,12 @@ const CHART_DATA = [
     {d:'Jun 30', disbursed:8700000, outstanding:6000000},
 ];
 
-const LENDER_DATA = [
-    { name:'Prembly Capital',    active:142, volume:124000000, recovery:72 },
-    { name:'Lagos Microfinance', active:98,  volume:87000000,  recovery:65 },
-    { name:'Abuja Trust Bank',   active:71,  volume:63000000,  recovery:81 },
-    { name:'NorthStar Lending',  active:34,  volume:28000000,  recovery:58 },
+const KYVO_PRODUCT_PERF = [
+    { name:'QuickLoan Standard', active:142, volume:124000000, recovery:72, npl:4.1 },
+    { name:'SME Booster',        active:98,  volume:87000000,  recovery:81, npl:2.8 },
+    { name:'Emergency Fund',     active:71,  volume:63000000,  recovery:65, npl:7.2 },
+    { name:'Salary Advance',     active:34,  volume:28000000,  recovery:88, npl:1.4 },
+    { name:'Micro Credit',       active:87,  volume:45000000,  recovery:74, npl:5.6 },
 ];
 
 const ACTIVITY_FEED = [
@@ -610,7 +611,8 @@ const Sidebar = () => {
    TOP HEADER BAR
 ───────────────────────────────────────── */
 const Header = ({ title, breadcrumb }) => {
-    const { user } = useContext(AppCtx);
+    const { user, setUser, setScreen } = useContext(AppCtx);
+    const [showProfile, setShowProfile] = useState(false);
     return (
         <header style={{ height:'64px', backgroundColor:'#fff', borderBottom:'1px solid #E2E8F0',
             boxShadow:'0 1px 3px rgba(0,0,0,.06)', display:'flex', alignItems:'center',
@@ -620,20 +622,7 @@ const Header = ({ title, breadcrumb }) => {
                 {breadcrumb && <div style={{ fontSize:'12px', color:'#64748B', marginTop:'1px' }}>{breadcrumb}</div>}
             </div>
             <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
-                {/* Lender dropdown */}
-                <div style={{ position:'relative' }}>
-                    <select style={{ height:'36px', padding:'0 32px 0 12px', border:'1px solid #E2E8F0',
-                        borderRadius:'8px', fontSize:'13px', color:'#334155', backgroundColor:'#fff',
-                        appearance:'none', cursor:'pointer', minWidth:'180px' }}>
-                        <option>All Lenders</option>
-                        <option>Prembly Capital</option>
-                        <option>Lagos Microfinance</option>
-                        <option>Abuja Trust Bank</option>
-                    </select>
-                    <Icon d={IC.chevDown} size={14} color="#94A3B8"
-                        style={{ position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}/>
-                </div>
-                {/* Date picker */}
+                {/* Date range */}
                 <div style={{ position:'relative' }}>
                     <select style={{ height:'36px', padding:'0 32px 0 12px', border:'1px solid #E2E8F0',
                         borderRadius:'8px', fontSize:'13px', color:'#334155', backgroundColor:'#fff',
@@ -649,7 +638,7 @@ const Header = ({ title, breadcrumb }) => {
                 {/* Refresh */}
                 <button style={{ width:'36px', height:'36px', border:'1px solid #E2E8F0', borderRadius:'8px',
                     backgroundColor:'#fff', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center',
-                    color:'#64748B', transition:'background-color .15s' }}
+                    transition:'background-color .15s' }}
                     onMouseEnter={e=>e.currentTarget.style.backgroundColor='#F1F5F9'}
                     onMouseLeave={e=>e.currentTarget.style.backgroundColor='#fff'}>
                     <Icon d={IC.refresh} size={16} color="#64748B"/>
@@ -664,11 +653,59 @@ const Header = ({ title, breadcrumb }) => {
                     <span style={{ position:'absolute', top:'7px', right:'7px', width:'7px', height:'7px',
                         borderRadius:'50%', backgroundColor:'#DC2626', border:'1.5px solid #fff' }}/>
                 </button>
-                {/* Avatar */}
-                <div style={{ width:'36px', height:'36px', borderRadius:'50%', backgroundColor:'#2B3DE8',
-                    display:'flex', alignItems:'center', justifyContent:'center',
-                    fontSize:'13px', fontWeight:700, color:'#fff', cursor:'pointer' }}>
-                    {user?.initials || 'SA'}
+                {/* Avatar + dropdown */}
+                <div style={{ position:'relative' }}>
+                    {showProfile && (
+                        <div onClick={()=>setShowProfile(false)}
+                            style={{ position:'fixed', inset:0, zIndex:99 }}/>
+                    )}
+                    <div onClick={()=>setShowProfile(p=>!p)}
+                        style={{ width:'36px', height:'36px', borderRadius:'50%', backgroundColor:'#2B3DE8',
+                            display:'flex', alignItems:'center', justifyContent:'center',
+                            fontSize:'13px', fontWeight:700, color:'#fff', cursor:'pointer',
+                            boxShadow: showProfile ? '0 0 0 3px #E8EBFD' : 'none', transition:'box-shadow .15s' }}>
+                        {user?.initials || 'SA'}
+                    </div>
+                    {showProfile && (
+                        <div style={{ position:'absolute', top:'calc(100% + 10px)', right:0, width:'224px',
+                            backgroundColor:'#fff', borderRadius:'10px', border:'1px solid #E2E8F0',
+                            boxShadow:'0 8px 24px rgba(0,0,0,.12)', zIndex:100, overflow:'hidden' }}>
+                            <div style={{ padding:'14px 16px', borderBottom:'1px solid #F1F5F9', backgroundColor:'#F8FAFC' }}>
+                                <div style={{ fontSize:'13px', fontWeight:700, color:'#1E293B' }}>{user?.name || 'Super Admin'}</div>
+                                <div style={{ fontSize:'11px', color:'#64748B', marginTop:'2px' }}>{user?.email || 'admin@kyvoloans.ng'}</div>
+                                <span style={{ display:'inline-block', marginTop:'6px', padding:'2px 8px', borderRadius:'9999px',
+                                    fontSize:'10px', fontWeight:700, backgroundColor:'#E8EBFD', color:'#2B3DE8', border:'1px solid #B8BFF8' }}>
+                                    {user?.role || 'Super Admin'}
+                                </span>
+                            </div>
+                            {[
+                                { label:'Role & Permissions', onClick:()=>setScreen('rbac') },
+                                { label:'System Config', onClick:()=>setScreen('system-config') },
+                                { label:'Loan Contract Config', onClick:()=>setScreen('loan-settings') },
+                            ].map(item=>(
+                                <button key={item.label} onClick={()=>{ setShowProfile(false); item.onClick(); }}
+                                    style={{ width:'100%', padding:'10px 16px', background:'none', border:'none', cursor:'pointer',
+                                        display:'flex', alignItems:'center', fontSize:'13px', color:'#334155', textAlign:'left' }}
+                                    onMouseEnter={e=>e.currentTarget.style.backgroundColor='#F8FAFC'}
+                                    onMouseLeave={e=>e.currentTarget.style.backgroundColor='transparent'}>
+                                    {item.label}
+                                </button>
+                            ))}
+                            <div style={{ borderTop:'1px solid #F1F5F9' }}>
+                                <button onClick={()=>{ setShowProfile(false); setUser(null); setScreen('login'); }}
+                                    style={{ width:'100%', padding:'10px 16px', background:'none', border:'none', cursor:'pointer',
+                                        display:'flex', alignItems:'center', gap:'8px', fontSize:'13px', color:'#DC2626', textAlign:'left' }}
+                                    onMouseEnter={e=>e.currentTarget.style.backgroundColor='#FFF1F2'}
+                                    onMouseLeave={e=>e.currentTarget.style.backgroundColor='transparent'}>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                        <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                                    </svg>
+                                    Sign Out
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </header>
@@ -823,36 +860,42 @@ const DashboardHome = () => {
                     </div>
                 </div>
 
-                {/* Lender Breakdown */}
+                {/* KYVO Product Performance */}
                 <div style={{ backgroundColor:'#fff', borderRadius:'10px', padding:'24px',
                     boxShadow:'0 1px 3px rgba(0,0,0,.07)', border:'1px solid #E2E8F0' }}>
-                    <h3 style={{ fontSize:'16px', fontWeight:600, color:'#1E293B', marginBottom:'20px' }}>By Lender</h3>
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px' }}>
+                        <h3 style={{ fontSize:'16px', fontWeight:600, color:'#1E293B' }}>Product Performance</h3>
+                        <span style={{ fontSize:'11px', fontWeight:700, padding:'2px 8px', borderRadius:'9999px',
+                            backgroundColor:'#E8EBFD', color:'#2B3DE8', border:'1px solid #B8BFF8' }}>KYVO</span>
+                    </div>
                     <div style={{ overflowX:'auto' }}>
                         <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px' }}>
                             <thead>
                                 <tr style={{ backgroundColor:'#1E293B' }}>
-                                    {['Lender','Active','Volume','Recovery'].map(h => (
-                                        <th key={h} style={{ padding:'10px 12px', color:'#fff', fontWeight:600,
-                                            fontSize:'11px', textAlign: h==='Volume'||h==='Active' ? 'right' : 'left',
+                                    {['Product','Active','Volume','Recovery','NPL'].map(h => (
+                                        <th key={h} style={{ padding:'8px 10px', color:'#fff', fontWeight:600,
+                                            fontSize:'10px', textAlign: h==='Product' ? 'left' : 'right',
                                             whiteSpace:'nowrap' }}>{h}</th>
                                     ))}
                                 </tr>
                             </thead>
                             <tbody>
-                                {LENDER_DATA.map((l, i) => (
-                                    <tr key={l.name} style={{ backgroundColor: i%2===0 ? '#fff' : T.primary50,
+                                {KYVO_PRODUCT_PERF.map((p, i) => (
+                                    <tr key={p.name} style={{ backgroundColor: i%2===0 ? '#fff' : T.primary50,
                                         borderBottom:'1px solid #E2E8F0' }}>
-                                        <td style={{ padding:'10px 12px', color:'#1E293B', fontWeight:500, fontSize:'12px' }}>{l.name}</td>
-                                        <td style={{ padding:'10px 12px', textAlign:'right', color:'#334155', fontFamily:'monospace' }}>{l.active}</td>
-                                        <td style={{ padding:'10px 12px', textAlign:'right', color:'#334155', fontFamily:'monospace', whiteSpace:'nowrap' }}>{fmtShort(l.volume)}</td>
-                                        <td style={{ padding:'10px 12px' }}>
-                                            <div style={{ display:'flex', alignItems:'center', gap:'6px' }}>
-                                                <div style={{ width:'60px', height:'6px', borderRadius:'9999px', backgroundColor:'#F1F5F9', overflow:'hidden' }}>
-                                                    <div style={{ height:'100%', width:`${l.recovery}%`, borderRadius:'9999px', backgroundColor:'#6874F0' }}/>
+                                        <td style={{ padding:'9px 10px', color:'#1E293B', fontWeight:500, fontSize:'11px' }}>{p.name}</td>
+                                        <td style={{ padding:'9px 10px', textAlign:'right', color:'#334155', fontFamily:'monospace' }}>{p.active}</td>
+                                        <td style={{ padding:'9px 10px', textAlign:'right', color:'#334155', fontFamily:'monospace', whiteSpace:'nowrap' }}>{fmtShort(p.volume)}</td>
+                                        <td style={{ padding:'9px 10px', textAlign:'right' }}>
+                                            <div style={{ display:'flex', alignItems:'center', gap:'4px', justifyContent:'flex-end' }}>
+                                                <div style={{ width:'40px', height:'5px', borderRadius:'9999px', backgroundColor:'#F1F5F9', overflow:'hidden' }}>
+                                                    <div style={{ height:'100%', width:`${p.recovery}%`, borderRadius:'9999px', backgroundColor:'#6874F0' }}/>
                                                 </div>
-                                                <span style={{ fontSize:'11px', fontWeight:600, color:'#334155' }}>{l.recovery}%</span>
+                                                <span style={{ fontSize:'10px', fontWeight:600, color:'#334155' }}>{p.recovery}%</span>
                                             </div>
                                         </td>
+                                        <td style={{ padding:'9px 10px', textAlign:'right', fontFamily:'monospace', fontSize:'11px', fontWeight:700,
+                                            color: p.npl>5 ? '#DC2626' : p.npl>3 ? '#D97706' : '#15803D' }}>{p.npl}%</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -3377,12 +3420,7 @@ const CONFIG_LOG = [
 ];
 
 const SystemConfiguration = () => {
-    const [openSections, setOpenSections] = useState({ loans:true, collections:false, notifications:false, integrations:false });
-    const [adminFee,     setAdminFee]     = useState('2000');
-    const [intRate,      setIntRate]      = useState('24');
-    const [penaltyRate,  setPenaltyRate]  = useState('1');
-    const [maxLoan,      setMaxLoan]      = useState('500000');
-    const [maxTenor,     setMaxTenor]     = useState('365');
+    const [openSections, setOpenSections] = useState({ collections:false, notifications:false, integrations:false });
     const [saved,        setSaved]        = useState(false);
 
     const toggle = k => setOpenSections(p => ({ ...p, [k]: !p[k] }));
@@ -3448,20 +3486,23 @@ const SystemConfiguration = () => {
                 {/* LEFT — Settings form */}
                 <div style={{ backgroundColor:'#fff', borderRadius:'10px', border:'1px solid #E2E8F0',
                     boxShadow:'0 1px 3px rgba(0,0,0,.06)', padding:'24px' }}>
-                    <h3 style={{ fontSize:'16px', fontWeight:700, color:'#1E293B', marginBottom:'16px' }}>Platform Settings</h3>
+                    <h3 style={{ fontSize:'16px', fontWeight:700, color:'#1E293B', marginBottom:'12px' }}>System Configuration</h3>
 
-                    {/* Section 1 — Loan Rules */}
-                    <SectionHeader id="loans" label="Loan Rules"/>
-                    {openSections.loans && (
-                        <div style={{ padding:'16px 0', display:'grid', gridTemplateColumns:'1fr 1fr', gap:'14px', borderBottom:'1px solid #E2E8F0', marginBottom:'0' }}>
-                            <Field label="Admin Fee" value={adminFee} onChange={setAdminFee} unit="₦" hint="Flat admin fee per disbursement"/>
-                            <Field label="Interest Rate (%)" value={intRate} onChange={setIntRate} hint="Annual interest rate"/>
-                            <Field label="Late Penalty Rate" value={penaltyRate} onChange={setPenaltyRate} hint="Compounding penalty post Day 30 (%/day)"/>
-                            <div/>
-                            <Field label="Max Loan Amount (₦)" value={maxLoan} onChange={setMaxLoan}/>
-                            <Field label="Max Tenor (days)" value={maxTenor} onChange={setMaxTenor}/>
+                    {/* Loan Contract Config redirect notice */}
+                    <div style={{ backgroundColor:'#E8EBFD', border:'1px solid #B8BFF8', borderRadius:'8px',
+                        padding:'12px 14px', marginBottom:'16px', display:'flex', alignItems:'flex-start', gap:'10px' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2B3DE8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,marginTop:'1px'}}>
+                            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                        <div>
+                            <div style={{ fontSize:'12px', fontWeight:700, color:'#1E2ECC', marginBottom:'3px' }}>
+                                Loan Rules moved to Loan Contract Config
+                            </div>
+                            <div style={{ fontSize:'11px', color:'#3B4FEA', lineHeight:1.5 }}>
+                                Admin fee, interest rate, loan limits, tenure, penalty rates, and CRC score mapping are now managed in the dedicated Loan Contract Config screen under Settings.
+                            </div>
                         </div>
-                    )}
+                    </div>
 
                     {/* Section 2 — Collections */}
                     <SectionHeader id="collections" label="Collections Rules"/>
@@ -3601,106 +3642,361 @@ const PERMISSIONS = [
 const ROLES = ['SA','FI','CO','OP','DA','SV'];
 const ROLE_LABELS = { SA:'Super Admin', FI:'Finance', CO:'Compliance', OP:'Operations', DA:'Desk Agent', SV:'Supervisor' };
 
-const RBACManagement = () => {
-    const [activeRole, setActiveRole] = useState('SA');
+const ADMIN_USERS_INITIAL = [
+    { id:1, name:'Adaeze Okonkwo', email:'adaeze@kyvoloans.ng',  role:'SA', status:'Active',  lastLogin:'27 Jun 2026, 08:14' },
+    { id:2, name:'Kemi Bello',     email:'kemi@kyvoloans.ng',    role:'FI', status:'Active',  lastLogin:'27 Jun 2026, 09:01' },
+    { id:3, name:'Sarah Ade',      email:'sarah@kyvoloans.ng',   role:'CO', status:'Active',  lastLogin:'26 Jun 2026, 17:44' },
+    { id:4, name:'Tunde Bakare',   email:'tunde@kyvoloans.ng',   role:'OP', status:'Active',  lastLogin:'27 Jun 2026, 07:55' },
+    { id:5, name:'Chidi Okeke',    email:'chidi@kyvoloans.ng',   role:'SV', status:'Active',  lastLogin:'25 Jun 2026, 13:30' },
+    { id:6, name:'Halima Yusuf',   email:'halima@kyvoloans.ng',  role:'DA', status:'Pending', lastLogin:'—' },
+];
 
-    const Check = ({ allowed }) => allowed ? (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15803D" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-        </svg>
-    ) : (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-    );
+const RBACManagement = () => {
+    const [activeTab,    setActiveTab]    = useState('matrix');
+    const [activeRole,   setActiveRole]   = useState('SA');
+    const [editMode,     setEditMode]     = useState(false);
+    const [perms,        setPerms]        = useState(PERMISSIONS.map(g=>({
+        section: g.section,
+        perms:   g.perms.map(p=>({...p}))
+    })));
+    const [savedPerms,   setSavedPerms]   = useState(false);
+    const [adminUsers,   setAdminUsers]   = useState(ADMIN_USERS_INITIAL);
+    const [showInvite,   setShowInvite]   = useState(false);
+    const [invForm,      setInvForm]      = useState({ name:'', email:'', role:'OP' });
+    const [invSent,      setInvSent]      = useState(false);
+
+    const togglePerm = (gIdx, pIdx, role) => {
+        if (role === 'SA') return; // SA always has all permissions
+        setPerms(prev => prev.map((g,gi) => gi!==gIdx ? g : {
+            ...g,
+            perms: g.perms.map((p,pi) => pi!==pIdx ? p : { ...p, [role]: p[role] ? 0 : 1 })
+        }));
+    };
+
+    const savePerms = () => { setSavedPerms(true); setEditMode(false); setTimeout(()=>setSavedPerms(false),3000); };
+
+    const sendInvite = () => {
+        if (!invForm.name || !invForm.email) return;
+        setAdminUsers(prev=>[...prev, {
+            id: prev.length+1, name:invForm.name, email:invForm.email,
+            role:invForm.role, status:'Pending', lastLogin:'—'
+        }]);
+        setInvSent(true);
+        setTimeout(()=>{ setInvSent(false); setShowInvite(false); setInvForm({ name:'', email:'', role:'OP' }); }, 2000);
+    };
+
+    const removeUser = (id) => setAdminUsers(prev=>prev.filter(u=>u.id!==id));
+
+    const Check = ({ allowed, editable, onClick }) => {
+        if (editable && allowed!==undefined) {
+            return (
+                <div onClick={onClick}
+                    style={{ width:'22px', height:'22px', borderRadius:'5px', border:'2px solid',
+                        borderColor: allowed ? '#15803D' : '#CBD5E1',
+                        backgroundColor: allowed ? '#F0FDF4' : '#F8FAFC',
+                        display:'flex', alignItems:'center', justifyContent:'center',
+                        cursor:'pointer', margin:'0 auto', transition:'all .15s' }}>
+                    {allowed ? (
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#15803D" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                    ) : null}
+                </div>
+            );
+        }
+        return allowed ? (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15803D" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+        ) : (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        );
+    };
+
+    const statusColor = s => s==='Active' ? { bg:'#F0FDF4', text:'#15803D', border:'#BBF7D0' } : { bg:'#FFFBEB', text:'#B45309', border:'#FDE68A' };
 
     return (
         <div className="fade-up" style={{ display:'flex', flexDirection:'column', height:'100%' }}>
-            {/* Read-only banner */}
-            <div style={{ backgroundColor:'#EFF6FF', borderLeft:'4px solid #3B4FEA',
-                padding:'0 32px', minHeight:'56px', display:'flex', alignItems:'center', gap:'12px', flexShrink:0 }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B4FEA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
-                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-                <span style={{ fontSize:'13px', color:'#1E2ECC', fontWeight:500 }}>
-                    View-only. To change permissions, update roles in codebase and redeploy.
-                </span>
-            </div>
-
-            {/* Role tabs */}
+            {/* Top bar */}
             <div style={{ backgroundColor:'#fff', borderBottom:'1px solid #E2E8F0',
-                padding:'0 32px', height:'48px', display:'flex', alignItems:'flex-end',
-                gap:'2px', flexShrink:0 }}>
-                {ROLES.map(r=>{
-                    const isActive = r===activeRole;
-                    return (
-                        <button key={r} onClick={()=>setActiveRole(r)}
-                            style={{ height:'40px', padding:'0 18px', borderRadius:'8px 8px 0 0', fontSize:'13px', fontWeight:600,
-                                border: isActive ? 'none' : '1px solid #E2E8F0',
-                                borderBottom: isActive ? '2px solid #3B4FEA' : '2px solid transparent',
-                                backgroundColor: isActive ? '#EFF6FF' : 'transparent',
-                                color: isActive ? '#2B3DE8' : '#475569', cursor:'pointer' }}>
-                            {ROLE_LABELS[r]}
+                padding:'0 32px', height:'52px', display:'flex', alignItems:'center',
+                justifyContent:'space-between', flexShrink:0 }}>
+                <div style={{ display:'flex', gap:'4px' }}>
+                    {[{id:'matrix',label:'Permission Matrix'},{id:'users',label:'Admin Users'}].map(t=>(
+                        <button key={t.id} onClick={()=>setActiveTab(t.id)}
+                            style={{ height:'36px', padding:'0 16px', borderRadius:'8px', fontSize:'13px', fontWeight:600,
+                                border:'none', cursor:'pointer',
+                                backgroundColor: activeTab===t.id ? '#E8EBFD' : 'transparent',
+                                color: activeTab===t.id ? '#2B3DE8' : '#475569' }}>
+                            {t.label}
                         </button>
-                    );
-                })}
-            </div>
-
-            <div style={{ flex:1, overflow:'auto', padding:'16px 32px' }}>
-                <div style={{ backgroundColor:'#fff', borderRadius:'10px', border:'1px solid #E2E8F0',
-                    boxShadow:'0 1px 3px rgba(0,0,0,.06)', overflow:'hidden' }}>
-                    <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'13px' }}>
-                        <thead>
-                            <tr style={{ backgroundColor:'#1E293B', height:'52px' }}>
-                                <th style={{ padding:'0 20px', color:'#fff', fontSize:'11px', fontWeight:600,
-                                    textAlign:'left', width:'38%' }}>Permission</th>
-                                {ROLES.map(r=>(
-                                    <th key={r} style={{ padding:'0 12px', color: r===activeRole ? '#93C5FD' : '#fff',
-                                        fontSize:'11px', fontWeight:700, textAlign:'center' }}>
-                                        {ROLE_LABELS[r]}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {PERMISSIONS.map(({ section, perms }) => (
-                                <React.Fragment key={section}>
-                                    <tr style={{ backgroundColor:'#F1F5F9', height:'40px' }}>
-                                        <td colSpan={ROLES.length+1} style={{ padding:'0 20px',
-                                            fontSize:'11px', fontWeight:800, color:'#475569',
-                                            textTransform:'uppercase', letterSpacing:'.1em' }}>
-                                            {section}
-                                        </td>
-                                    </tr>
-                                    {perms.map((p,i)=>(
-                                        <tr key={p.label} style={{
-                                            backgroundColor: i%2===0 ? '#fff' : '#F8FAFC',
-                                            borderBottom:'1px solid #E2E8F0', height:'52px' }}>
-                                            <td style={{ padding:'0 20px', fontWeight:500,
-                                                color: p[activeRole] ? '#1E293B' : '#94A3B8' }}>
-                                                {p.label}
-                                            </td>
-                                            {ROLES.map(r=>(
-                                                <td key={r} style={{ padding:'0 12px', textAlign:'center',
-                                                    backgroundColor: r===activeRole ? (p[r]?'#F0FFF4':'#FFF1F2') : 'transparent' }}>
-                                                    <div style={{ display:'flex', justifyContent:'center' }}>
-                                                        <Check allowed={!!p[r]}/>
-                                                    </div>
-                                                </td>
-                                            ))}
-                                        </tr>
-                                    ))}
-                                </React.Fragment>
-                            ))}
-                        </tbody>
-                    </table>
-                    <div style={{ padding:'12px 20px', backgroundColor:'#F8FAFC', borderTop:'1px solid #E2E8F0' }}>
-                        <p style={{ fontSize:'11px', color:'#94A3B8', margin:0 }}>
-                            Role matrix as of v1.4.0 — Deployed 08 Jun 2026
-                        </p>
-                    </div>
+                    ))}
+                </div>
+                <div style={{ display:'flex', gap:'8px' }}>
+                    {savedPerms && (
+                        <span style={{ fontSize:'12px', color:'#15803D', fontWeight:600, display:'flex', alignItems:'center', gap:'4px' }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            Permissions saved
+                        </span>
+                    )}
+                    {activeTab==='matrix' && !editMode && (
+                        <button onClick={()=>setEditMode(true)}
+                            style={{ height:'36px', padding:'0 16px', borderRadius:'8px', fontSize:'13px', fontWeight:600,
+                                border:'1.5px solid #2B3DE8', backgroundColor:'#fff', color:'#2B3DE8', cursor:'pointer' }}>
+                            Edit Permissions
+                        </button>
+                    )}
+                    {activeTab==='matrix' && editMode && (
+                        <>
+                            <button onClick={()=>{ setPerms(PERMISSIONS.map(g=>({section:g.section,perms:g.perms.map(p=>({...p}))}))); setEditMode(false); }}
+                                style={{ height:'36px', padding:'0 14px', borderRadius:'8px', fontSize:'13px', fontWeight:500,
+                                    border:'1.5px solid #E2E8F0', backgroundColor:'#fff', color:'#475569', cursor:'pointer' }}>
+                                Discard
+                            </button>
+                            <button onClick={savePerms}
+                                style={{ height:'36px', padding:'0 16px', borderRadius:'8px', fontSize:'13px', fontWeight:700,
+                                    border:'none', backgroundColor:'#2B3DE8', color:'#fff', cursor:'pointer' }}>
+                                Save Changes
+                            </button>
+                        </>
+                    )}
+                    {activeTab==='users' && (
+                        <button onClick={()=>setShowInvite(true)}
+                            style={{ height:'36px', padding:'0 16px', borderRadius:'8px', fontSize:'13px', fontWeight:700,
+                                border:'none', backgroundColor:'#2B3DE8', color:'#fff', cursor:'pointer',
+                                display:'flex', alignItems:'center', gap:'6px' }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                            Invite Admin
+                        </button>
+                    )}
                 </div>
             </div>
+
+            {/* Permission Matrix tab */}
+            {activeTab==='matrix' && (
+                <>
+                    {editMode && (
+                        <div style={{ backgroundColor:'#FFFBEB', borderBottom:'1px solid #FDE68A',
+                            padding:'0 32px', height:'44px', display:'flex', alignItems:'center', gap:'10px', flexShrink:0 }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B45309" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                            </svg>
+                            <span style={{ fontSize:'12px', color:'#92400E', fontWeight:500 }}>
+                                Edit mode active — click checkboxes to toggle permissions. Super Admin permissions are locked.
+                            </span>
+                        </div>
+                    )}
+                    {/* Role tabs */}
+                    <div style={{ backgroundColor:'#fff', borderBottom:'1px solid #E2E8F0',
+                        padding:'0 32px', height:'48px', display:'flex', alignItems:'flex-end',
+                        gap:'2px', flexShrink:0 }}>
+                        {ROLES.map(r=>{
+                            const isActive = r===activeRole;
+                            return (
+                                <button key={r} onClick={()=>setActiveRole(r)}
+                                    style={{ height:'40px', padding:'0 18px', borderRadius:'8px 8px 0 0', fontSize:'13px', fontWeight:600,
+                                        border: isActive ? 'none' : '1px solid #E2E8F0',
+                                        borderBottom: isActive ? '2px solid #3B4FEA' : '2px solid transparent',
+                                        backgroundColor: isActive ? '#EFF6FF' : 'transparent',
+                                        color: isActive ? '#2B3DE8' : '#475569', cursor:'pointer' }}>
+                                    {ROLE_LABELS[r]}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <div style={{ flex:1, overflow:'auto', padding:'16px 32px' }}>
+                        <div style={{ backgroundColor:'#fff', borderRadius:'10px', border:'1px solid #E2E8F0',
+                            boxShadow:'0 1px 3px rgba(0,0,0,.06)', overflow:'hidden' }}>
+                            <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'13px' }}>
+                                <thead>
+                                    <tr style={{ backgroundColor:'#1E293B', height:'52px' }}>
+                                        <th style={{ padding:'0 20px', color:'#fff', fontSize:'11px', fontWeight:600,
+                                            textAlign:'left', width:'38%' }}>Permission</th>
+                                        {ROLES.map(r=>(
+                                            <th key={r} style={{ padding:'0 12px', color: r===activeRole ? '#93C5FD' : '#fff',
+                                                fontSize:'11px', fontWeight:700, textAlign:'center' }}>
+                                                {ROLE_LABELS[r]}
+                                                {r==='SA' && <div style={{ fontSize:'9px', color:'#64748B', fontWeight:400 }}>locked</div>}
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {perms.map(({ section, perms:pList }, gIdx) => (
+                                        <React.Fragment key={section}>
+                                            <tr style={{ backgroundColor:'#F1F5F9', height:'40px' }}>
+                                                <td colSpan={ROLES.length+1} style={{ padding:'0 20px',
+                                                    fontSize:'11px', fontWeight:800, color:'#475569',
+                                                    textTransform:'uppercase', letterSpacing:'.1em' }}>
+                                                    {section}
+                                                </td>
+                                            </tr>
+                                            {pList.map((p,pIdx)=>(
+                                                <tr key={p.label} style={{
+                                                    backgroundColor: pIdx%2===0 ? '#fff' : '#F8FAFC',
+                                                    borderBottom:'1px solid #E2E8F0', height:'52px' }}>
+                                                    <td style={{ padding:'0 20px', fontWeight:500,
+                                                        color: p[activeRole] ? '#1E293B' : '#94A3B8' }}>
+                                                        {p.label}
+                                                    </td>
+                                                    {ROLES.map(r=>(
+                                                        <td key={r} style={{ padding:'0 12px', textAlign:'center',
+                                                            backgroundColor: r===activeRole ? (p[r]?'#F0FFF4':'#FFF1F2') : 'transparent' }}>
+                                                            <div style={{ display:'flex', justifyContent:'center' }}>
+                                                                <Check
+                                                                    allowed={!!p[r]}
+                                                                    editable={editMode && r!=='SA'}
+                                                                    onClick={()=>togglePerm(gIdx,pIdx,r)}/>
+                                                            </div>
+                                                        </td>
+                                                    ))}
+                                                </tr>
+                                            ))}
+                                        </React.Fragment>
+                                    ))}
+                                </tbody>
+                            </table>
+                            <div style={{ padding:'12px 20px', backgroundColor:'#F8FAFC', borderTop:'1px solid #E2E8F0' }}>
+                                <p style={{ fontSize:'11px', color:'#94A3B8', margin:0 }}>
+                                    Role matrix — last saved 27 Jun 2026 by Super Admin
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* Admin Users tab */}
+            {activeTab==='users' && (
+                <div style={{ flex:1, overflow:'auto', padding:'16px 32px' }}>
+                    <div style={{ backgroundColor:'#fff', borderRadius:'10px', border:'1px solid #E2E8F0',
+                        boxShadow:'0 1px 3px rgba(0,0,0,.06)', overflow:'hidden' }}>
+                        <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'13px' }}>
+                            <thead>
+                                <tr style={{ backgroundColor:'#1E293B', height:'44px' }}>
+                                    {['Name','Email','Role','Status','Last Login',''].map((h,i)=>(
+                                        <th key={i} style={{ padding:'0 16px', color:'#fff', fontSize:'11px', fontWeight:600, textAlign:'left' }}>{h}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {adminUsers.map((u,i)=>{
+                                    const sc = statusColor(u.status);
+                                    return (
+                                        <tr key={u.id} style={{ backgroundColor:i%2===0?'#fff':'#F8FAFC', borderBottom:'1px solid #E2E8F0', height:'56px' }}>
+                                            <td style={{ padding:'0 16px' }}>
+                                                <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
+                                                    <div style={{ width:'32px', height:'32px', borderRadius:'50%', backgroundColor:'#E8EBFD',
+                                                        display:'flex', alignItems:'center', justifyContent:'center',
+                                                        fontSize:'12px', fontWeight:700, color:'#2B3DE8', flexShrink:0 }}>
+                                                        {u.name.split(' ').map(w=>w[0]).join('').slice(0,2)}
+                                                    </div>
+                                                    <span style={{ fontWeight:600, color:'#1E293B' }}>{u.name}</span>
+                                                </div>
+                                            </td>
+                                            <td style={{ padding:'0 16px', color:'#475569', fontSize:'12px' }}>{u.email}</td>
+                                            <td style={{ padding:'0 16px' }}>
+                                                <span style={{ padding:'2px 8px', borderRadius:'9999px', fontSize:'11px', fontWeight:700,
+                                                    backgroundColor:'#E8EBFD', color:'#2B3DE8', border:'1px solid #B8BFF8' }}>
+                                                    {ROLE_LABELS[u.role]}
+                                                </span>
+                                            </td>
+                                            <td style={{ padding:'0 16px' }}>
+                                                <span style={{ padding:'2px 8px', borderRadius:'9999px', fontSize:'11px', fontWeight:600,
+                                                    backgroundColor:sc.bg, color:sc.text, border:`1px solid ${sc.border}` }}>
+                                                    {u.status}
+                                                </span>
+                                            </td>
+                                            <td style={{ padding:'0 16px', color:'#64748B', fontSize:'12px', fontFamily:'monospace' }}>{u.lastLogin}</td>
+                                            <td style={{ padding:'0 16px' }}>
+                                                {u.role !== 'SA' && (
+                                                    <button onClick={()=>removeUser(u.id)}
+                                                        style={{ fontSize:'12px', fontWeight:600, color:'#DC2626',
+                                                            background:'none', border:'none', cursor:'pointer', padding:0 }}>
+                                                        Remove
+                                                    </button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {/* Invite Admin modal */}
+            {showInvite && (
+                <div style={{ position:'fixed', inset:0, backgroundColor:'rgba(15,23,42,.45)', zIndex:200,
+                    display:'flex', alignItems:'center', justifyContent:'center' }}
+                    onClick={e=>{ if(e.target===e.currentTarget) setShowInvite(false); }}>
+                    <div style={{ backgroundColor:'#fff', borderRadius:'12px', width:'420px', padding:'28px',
+                        boxShadow:'0 20px 60px rgba(0,0,0,.25)' }}>
+                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px' }}>
+                            <h3 style={{ fontSize:'18px', fontWeight:700, color:'#1E293B' }}>Invite Admin User</h3>
+                            <button onClick={()=>setShowInvite(false)}
+                                style={{ background:'none', border:'none', cursor:'pointer', color:'#94A3B8', fontSize:'20px', lineHeight:1 }}>✕</button>
+                        </div>
+
+                        {invSent ? (
+                            <div style={{ textAlign:'center', padding:'20px 0' }}>
+                                <div style={{ fontSize:'40px', marginBottom:'12px' }}>✅</div>
+                                <div style={{ fontSize:'16px', fontWeight:700, color:'#15803D' }}>Invite sent!</div>
+                                <div style={{ fontSize:'13px', color:'#64748B', marginTop:'4px' }}>
+                                    An email invite has been sent to {invForm.email}
+                                </div>
+                            </div>
+                        ) : (
+                            <div style={{ display:'flex', flexDirection:'column', gap:'14px' }}>
+                                {[
+                                    { label:'Full Name', key:'name', type:'text', placeholder:'e.g. Amara Nwosu' },
+                                    { label:'Email Address', key:'email', type:'email', placeholder:'e.g. amara@kyvoloans.ng' },
+                                ].map(f=>(
+                                    <div key={f.key}>
+                                        <label style={{ fontSize:'11px', fontWeight:600, color:'#475569',
+                                            textTransform:'uppercase', letterSpacing:'.06em', display:'block', marginBottom:'5px' }}>{f.label}</label>
+                                        <input type={f.type} value={invForm[f.key]} placeholder={f.placeholder}
+                                            onChange={e=>setInvForm(p=>({...p,[f.key]:e.target.value}))}
+                                            style={{ width:'100%', height:'38px', padding:'0 12px', borderRadius:'8px',
+                                                border:'1px solid #CBD5E1', fontSize:'13px', color:'#334155',
+                                                boxSizing:'border-box', outline:'none' }}/>
+                                    </div>
+                                ))}
+                                <div>
+                                    <label style={{ fontSize:'11px', fontWeight:600, color:'#475569',
+                                        textTransform:'uppercase', letterSpacing:'.06em', display:'block', marginBottom:'5px' }}>Role</label>
+                                    <select value={invForm.role} onChange={e=>setInvForm(p=>({...p,role:e.target.value}))}
+                                        style={{ width:'100%', height:'38px', padding:'0 12px', borderRadius:'8px',
+                                            border:'1px solid #CBD5E1', fontSize:'13px', color:'#334155',
+                                            backgroundColor:'#fff', cursor:'pointer', boxSizing:'border-box' }}>
+                                        {Object.entries(ROLE_LABELS).filter(([k])=>k!=='SA').map(([k,v])=>(
+                                            <option key={k} value={k}>{v}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div style={{ backgroundColor:'#F8FAFC', borderRadius:'8px', padding:'10px 12px',
+                                    border:'1px solid #E2E8F0', fontSize:'11px', color:'#64748B', lineHeight:1.5 }}>
+                                    The invitee will receive an email with a one-time setup link valid for 48 hours.
+                                    Their account will appear as <strong>Pending</strong> until they complete setup.
+                                </div>
+                                <button onClick={sendInvite}
+                                    style={{ width:'100%', height:'42px', borderRadius:'8px', fontSize:'14px', fontWeight:700,
+                                        border:'none', backgroundColor:'#2B3DE8', color:'#fff', cursor:'pointer',
+                                        marginTop:'4px' }}>
+                                    Send Invite
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -4843,11 +5139,11 @@ const PortfolioAgeingReport = () => {
    ADM-21: PRODUCT CONFIGURATION
 ───────────────────────────────────────── */
 const PRODUCTS_INITIAL = [
-    { id:1, name:'QuickLoan Standard',  lender:'QuickCredit Ltd',    min:10000,  max:100000,  rate:'24%', tenorFrom:1, tenorTo:12, fee:'₦2,000 flat', active:true,  notes:'' },
-    { id:2, name:'SME Booster',         lender:'FastCash Nigeria',   min:50000,  max:500000,  rate:'18%', tenorFrom:3, tenorTo:24, fee:'₦5,000 flat', active:true,  notes:'' },
-    { id:3, name:'Emergency Fund',      lender:'EasySave Finance',   min:5000,   max:50000,   rate:'30%', tenorFrom:1, tenorTo:3,  fee:'₦1,000 flat', active:true,  notes:'' },
-    { id:4, name:'Salary Advance',      lender:'MicroLend Partners', min:20000,  max:200000,  rate:'15%', tenorFrom:1, tenorTo:6,  fee:'₦3,000 flat', active:false, notes:'Paused pending policy review' },
-    { id:5, name:'Micro Credit',        lender:'Apex Micro Finance', min:2000,   max:25000,   rate:'36%', tenorFrom:1, tenorTo:6,  fee:'₦500 flat',   active:true,  notes:'' },
+    { id:1, name:'QuickLoan Standard', lender:'KYVO Loans', min:10000,  max:100000,  rate:'24%', tenorFrom:1, tenorTo:12, fee:'₦2,000 flat', active:true,  notes:'' },
+    { id:2, name:'SME Booster',        lender:'KYVO Loans', min:50000,  max:500000,  rate:'18%', tenorFrom:3, tenorTo:24, fee:'₦5,000 flat', active:true,  notes:'' },
+    { id:3, name:'Emergency Fund',     lender:'KYVO Loans', min:5000,   max:50000,   rate:'30%', tenorFrom:1, tenorTo:3,  fee:'₦1,000 flat', active:true,  notes:'' },
+    { id:4, name:'Salary Advance',     lender:'KYVO Loans', min:20000,  max:200000,  rate:'15%', tenorFrom:1, tenorTo:6,  fee:'₦3,000 flat', active:false, notes:'Paused pending policy review' },
+    { id:5, name:'Micro Credit',       lender:'KYVO Loans', min:2000,   max:25000,   rate:'36%', tenorFrom:1, tenorTo:6,  fee:'₦500 flat',   active:true,  notes:'' },
 ];
 
 const ProductConfiguration = () => {
@@ -4904,9 +5200,9 @@ const ProductConfiguration = () => {
                         <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'13px' }}>
                             <thead>
                                 <tr style={{ backgroundColor:'#1E293B', height:'44px' }}>
-                                    {['Product Name','Lender','Min (₦)','Max (₦)','Rate','Tenor','Admin Fee','Status','Actions'].map((h,i)=>(
+                                    {['Product Name','Min (₦)','Max (₦)','Rate','Tenor','Admin Fee','Status','Actions'].map((h,i)=>(
                                         <th key={h} style={{ padding:'0 14px', color:'#fff', fontSize:'11px', fontWeight:600,
-                                            textAlign: i>=2&&i<=6 ? 'right' : 'left', whiteSpace:'nowrap' }}>{h}</th>
+                                            textAlign: i>=1&&i<=5 ? 'right' : 'left', whiteSpace:'nowrap' }}>{h}</th>
                                     ))}
                                 </tr>
                             </thead>
@@ -4919,7 +5215,6 @@ const ProductConfiguration = () => {
                                             onMouseEnter={e=>e.currentTarget.style.backgroundColor='#F1F5F9'}
                                             onMouseLeave={e=>e.currentTarget.style.backgroundColor=rowBg}>
                                             <td style={{ padding:'0 14px', fontWeight:600, color: inactive ? '#94A3B8' : '#1E293B' }}>{p.name}</td>
-                                            <td style={{ padding:'0 14px', color: inactive ? '#94A3B8' : '#475569', fontSize:'12px' }}>{p.lender}</td>
                                             <td style={{ padding:'0 14px', textAlign:'right', fontFamily:'monospace', fontSize:'12px', color: inactive ? '#94A3B8' : '#334155' }}>{fmtAmt(p.min)}</td>
                                             <td style={{ padding:'0 14px', textAlign:'right', fontFamily:'monospace', fontSize:'12px', color: inactive ? '#94A3B8' : '#334155' }}>{fmtAmt(p.max)}</td>
                                             <td style={{ padding:'0 14px', textAlign:'right', fontFamily:'monospace', fontWeight:600, color: inactive ? '#94A3B8' : '#1E293B' }}>{p.rate}</td>
@@ -4971,17 +5266,29 @@ const ProductConfiguration = () => {
                     <div style={{ width:'420px', flexShrink:0, backgroundColor:'#fff',
                         borderLeft:'1px solid #E2E8F0', overflow:'auto', padding:'24px',
                         boxShadow:'-6px 0 24px rgba(0,0,0,.08)' }}>
-                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px' }}>
+                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'14px' }}>
                             <h3 style={{ fontSize:'18px', fontWeight:700, color:'#1E293B' }}>Edit Product</h3>
                             <button onClick={closeEdit}
                                 style={{ background:'none', border:'none', cursor:'pointer', color:'#94A3B8', fontSize:'20px', lineHeight:1 }}>✕</button>
+                        </div>
+
+                        {/* Loan Contract Config sync notice */}
+                        <div style={{ backgroundColor:'#E8EBFD', border:'1px solid #B8BFF8', borderRadius:'7px',
+                            padding:'10px 12px', marginBottom:'14px', display:'flex', alignItems:'flex-start', gap:'8px' }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2B3DE8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,marginTop:'1px'}}>
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                            <div style={{ fontSize:'11px', color:'#1E2ECC', lineHeight:1.5 }}>
+                                Rate &amp; limit fields below <strong>override</strong> the global defaults set in{' '}
+                                <strong>Loan Contract Config</strong>. Leave at defaults unless this product needs a specific exception.
+                            </div>
                         </div>
 
                         {/* 2-col form */}
                         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'14px', marginBottom:'14px' }}>
                             {[
                                 { label:'Product Name', key:'name',    type:'text',   full:true  },
-                                { label:'Lender',       key:'lender',  type:'select', opts:['QuickCredit Ltd','FastCash Nigeria','EasySave Finance','MicroLend Partners','Apex Micro Finance'] },
+                                { label:'Lender',       key:'lender',  type:'select', opts:['KYVO Loans'] },
                                 { label:'Min Amount (₦)',key:'min',    type:'number'  },
                                 { label:'Max Amount (₦)',key:'max',    type:'number'  },
                                 { label:'Interest Rate %',key:'rate',  type:'text'    },
